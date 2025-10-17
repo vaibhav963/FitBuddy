@@ -1,0 +1,423 @@
+{% extends 'FitBuddy_app/base.html' %}
+{% load static %}
+
+{% block header %}
+Add Meal Log
+{% endblock header %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'FitBuddy_app/base.css' %}">
+<style>
+    .add-meal-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: var(--light-bg);
+        min-height: 100vh;
+    }
+    
+    .form-card {
+        background: white;
+        padding: 50px;
+        border-radius: 20px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--primary-bg);
+        margin-top: 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .form-header h1 {
+        font-family: 'Clash Display', sans-serif;
+        color: var(--dark-color);
+        margin-bottom: 15px;
+        font-size: 2.5rem;
+        font-weight: 600;
+    }
+    
+    .form-header p {
+        color: var(--text-color);
+        margin-bottom: 0;
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .form-control, .form-select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .recipe-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+        border-left: 4px solid #667eea;
+        display: none;
+    }
+    
+    .recipe-nutrition {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+    }
+    
+    .nutrition-item {
+        text-align: center;
+    }
+    
+    .nutrition-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .nutrition-label {
+        font-size: 0.8rem;
+        color: #666;
+        text-transform: uppercase;
+    }
+    
+    .btn {
+        background: var(--secondary-color);
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: all var(--transition);
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .btn:hover {
+        background: var(--secondary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(138, 190, 83, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: #667eea;
+        border: 2px solid #667eea;
+    }
+    
+    .btn-outline:hover {
+        background: #667eea;
+        color: white;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+    
+    .serving-calculator {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+        display: none;
+    }
+    
+    .calculated-nutrition {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .calc-item {
+        text-align: center;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+    }
+    
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 5px 0 0 0;
+    }
+    
+    .errorlist li {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-bottom: 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .add-meal-container {
+            padding: 10px;
+        }
+        
+        .form-card {
+            padding: 25px;
+            margin-top: 20px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .calculated-nutrition {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="add-meal-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1>🍽️ Log a Meal</h1>
+            <p>Add a recipe to your daily meal log</p>
+        </div>
+        
+        <form method="post" id="meal-form">
+            {% csrf_token %}
+            
+            <!-- Recipe Selection -->
+            <div class="form-group">
+                <label for="{{ form.recipe.id_for_label }}" class="form-label">
+                    <i class="fas fa-search"></i> Select Recipe
+                </label>
+                {{ form.recipe }}
+                {% if form.recipe.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.recipe.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                
+                <!-- Recipe Info Display -->
+                <div class="recipe-info" id="recipe-info">
+                    <h5 id="recipe-name"></h5>
+                    <div class="recipe-nutrition" id="recipe-nutrition">
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="base-calories">-</div>
+                            <div class="nutrition-label">Calories</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="base-protein">-</div>
+                            <div class="nutrition-label">Protein (g)</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="base-carbs">-</div>
+                            <div class="nutrition-label">Carbs (g)</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="base-fat">-</div>
+                            <div class="nutrition-label">Fat (g)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Meal Type -->
+            <div class="form-group">
+                <label for="{{ form.meal_type.id_for_label }}" class="form-label">
+                    <i class="fas fa-clock"></i> Meal Type
+                </label>
+                {{ form.meal_type }}
+                {% if form.meal_type.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.meal_type.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <!-- Date -->
+            <div class="form-group">
+                <label for="{{ form.date_logged.id_for_label }}" class="form-label">
+                    <i class="fas fa-calendar"></i> Date
+                </label>
+                {{ form.date_logged }}
+                {% if form.date_logged.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.date_logged.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <!-- Servings -->
+            <div class="form-group">
+                <label for="{{ form.servings.id_for_label }}" class="form-label">
+                    <i class="fas fa-balance-scale"></i> Number of Servings
+                </label>
+                {{ form.servings }}
+                {% if form.servings.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.servings.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                
+                <!-- Serving Calculator -->
+                <div class="serving-calculator" id="serving-calculator">
+                    <h6><i class="fas fa-calculator"></i> Nutrition for Your Serving Size:</h6>
+                    <div class="calculated-nutrition">
+                        <div class="calc-item">
+                            <div class="nutrition-value" id="calc-calories">-</div>
+                            <div class="nutrition-label">Calories</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="nutrition-value" id="calc-protein">-</div>
+                            <div class="nutrition-label">Protein</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="nutrition-value" id="calc-carbs">-</div>
+                            <div class="nutrition-label">Carbs</div>
+                        </div>
+                        <div class="calc-item">
+                            <div class="nutrition-value" id="calc-fat">-</div>
+                            <div class="nutrition-label">Fat</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="form-group">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                    <i class="fas fa-sticky-note"></i> Notes (Optional)
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.notes.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn">
+                    <i class="fas fa-save"></i> Log Meal
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recipeSelect = document.getElementById('{{ form.recipe.id_for_label }}');
+    const recipeInfo = document.getElementById('recipe-info');
+    const servingInput = document.getElementById('{{ form.servings.id_for_label }}');
+    const servingCalculator = document.getElementById('serving-calculator');
+    
+    let currentRecipeData = null;
+    
+    // Recipe data (you might want to load this via AJAX in production)
+    const recipeData = {
+        {% for recipe in form.recipe.queryset %}
+            '{{ recipe.id }}': {
+                name: '{{ recipe.recipe_name|escapejs }}',
+                calories: {{ recipe.calories|default:0 }},
+                protein: {{ recipe.protein|default:0 }},
+                carbohydrate: {{ recipe.carbohydrate|default:0 }},
+                fat: {{ recipe.fat|default:0 }}
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    function updateRecipeInfo() {
+        const selectedValue = recipeSelect.value;
+        if (selectedValue && recipeData[selectedValue]) {
+            currentRecipeData = recipeData[selectedValue];
+            
+            document.getElementById('recipe-name').textContent = currentRecipeData.name;
+            document.getElementById('base-calories').textContent = Math.round(currentRecipeData.calories);
+            document.getElementById('base-protein').textContent = Math.round(currentRecipeData.protein);
+            document.getElementById('base-carbs').textContent = Math.round(currentRecipeData.carbohydrate);
+            document.getElementById('base-fat').textContent = Math.round(currentRecipeData.fat);
+            
+            recipeInfo.style.display = 'block';
+            updateServingCalculation();
+        } else {
+            recipeInfo.style.display = 'none';
+            servingCalculator.style.display = 'none';
+            currentRecipeData = null;
+        }
+    }
+    
+    function updateServingCalculation() {
+        if (currentRecipeData && servingInput.value) {
+            const servings = parseFloat(servingInput.value) || 1;
+            
+            document.getElementById('calc-calories').textContent = Math.round(currentRecipeData.calories * servings);
+            document.getElementById('calc-protein').textContent = Math.round(currentRecipeData.protein * servings) + 'g';
+            document.getElementById('calc-carbs').textContent = Math.round(currentRecipeData.carbohydrate * servings) + 'g';
+            document.getElementById('calc-fat').textContent = Math.round(currentRecipeData.fat * servings) + 'g';
+            
+            servingCalculator.style.display = 'block';
+        } else {
+            servingCalculator.style.display = 'none';
+        }
+    }
+    
+    recipeSelect.addEventListener('change', updateRecipeInfo);
+    servingInput.addEventListener('input', updateServingCalculation);
+    
+    // Initialize if there's a pre-selected value
+    updateRecipeInfo();
+});
+</script>
+{% endblock content %}

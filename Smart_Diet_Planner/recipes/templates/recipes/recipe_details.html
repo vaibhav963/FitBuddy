@@ -1,0 +1,354 @@
+{% extends 'FitBuddy_app/base.html' %}
+
+{% block header %}
+Recipe Page
+{% endblock %}
+
+{% load static %}
+{% block css %}
+<link rel="stylesheet" href="{% static 'recipes/css/recipe_details.css' %}">
+{% endblock %}
+
+{% block content %}
+<section>
+    <div class="background">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+    </div>
+    <div class="heading">
+        <h1>{{recipe.recipe_name}}</h1>
+    </div>
+    <div class="columns">
+        <div class="column column-left">
+            <div class="info-container">
+                <!-- Last Updated Field -->
+                <div class="last-updated">
+                    <span>
+                        <p class="body"><strong>Last Updated: </strong> December 8, 2024</p> <!-- Example content -->
+                    </span>
+                </div>
+                <!-- Ratings Field -->
+                <div class="ratings">
+                    <span>
+                        <strong class="body-reg-b">Ratings:</strong>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star">☆</span>
+                        <span class="star">☆</span>
+                    </span>
+                </div>
+            </div>
+<!-- Recipe Image -->
+            <div class="image-container">
+                {% if recipe.has_image %}
+                    <img src="{{recipe.get_image_url}}" 
+                         alt="{{recipe.recipe_name}}" 
+                         class="responsive-image"
+                         loading="lazy"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="recipe-placeholder responsive-image" style="display:none;">
+                        <div class="placeholder-content">
+                            <span>🍽️</span>
+                            <p>{{recipe.recipe_name}}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="recipe-placeholder responsive-image">
+                        <div class="placeholder-content">
+                            <span>🍽️</span>
+                            <p>{{recipe.recipe_name}}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="tags-container">
+                <div class="text-wrapper"><strong>Tags</strong></div>
+                <div class="tags">
+                    {% if recipe.type %}
+                        <div class="tag tagline">{{ recipe.type|title }}</div>
+                    {% endif %}
+                    {% if recipe.cuisine %}
+                        <div class="tag tagline highlighted">{{ recipe.cuisine|title }}</div>
+                    {% endif %}
+                   
+                </div>
+            </div>
+
+<!-- Description -->
+            <div class="description text-container">
+                <p class="h5-bold">Description</p>
+                <hr>
+                <p class="body">
+                    A simple yet flavorful salmon recipe infused with Mediterranean spices, perfect for a healthy dinner
+                    or meal
+                    prep.
+                </p>
+            </div>
+
+            <!-- Ingredients -->
+            <div class="text-container">
+                <p class="h5-bold">Ingredients</p>
+                <hr>
+                <ul class="body list">
+                    {% for item in recipe.get_ingredients_list %}
+                        <li>{{ item }}</li>
+                    {% empty %}
+                        <li>No ingredients provided.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="steps text-container">
+                <p class="h5-bold">Steps</p>
+                <hr>
+                <ol class="body list">
+                    {% for step in recipe.get_instructions_list %}
+                    <li>
+                        <strong class="body-reg-b">Step {{ forloop.counter }}:</strong><br>
+                        <p>{{ step }}</p>
+                    </li>
+                    {% empty %}
+                    <li>No steps provided for this recipe.</li>
+                    {% endfor %}
+                </ol>
+            </div>
+
+        </div>
+        <div class="column column-right">
+            <table class="nutritional-overview">
+                <tr colspan="2">
+                   <strong class="h5-bold" >Nutritional Overview</strong>
+                </tr>
+                <thead>
+                    <tr>
+                        <th colspan="2">About Recipe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Recipe Id</strong></td>
+                        <td>32190</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Diet Type</strong></td>
+                        <td>{{recipe.type}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cuisine Type</strong></td>
+                        <td>{{recipe.cuisine}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prep Time</strong></td>
+                        <td>{{ recipe.prep_time|stringformat:"s"|slice:":-3" }}  minutes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cook Time</strong></td>
+                        <td>{{ recipe.cook_time|stringformat:"s"|slice:":-3" }} minutes</td>
+                    </tr>
+                </tbody>
+                <thead>
+                    <tr>
+                        <th colspan="2">Nutrients</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Calories per Serving</strong></td>
+                        <td>{{ recipe.calories }} kcal</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Protein</strong></td>
+                        <td>{{ recipe.protein }} g</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Carbs</strong></td>
+                        <td>{{ recipe.carbohydrate }} g</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fats</strong></td>
+                        <td>{{ recipe.fat }} g</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cholesterol</strong></td>
+                        <td>{{ recipe.cholesterol }} mg</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sodium</strong></td>
+                        <td>{{ recipe.sodium }} mg</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sugar</strong></td>
+                        <td>{{ recipe.sugar }} g</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- QUICK ADD MEAL BUTTON -->
+            {% if user.is_authenticated %}
+            <div class="quick-add-meal" style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; text-align: center;">
+                <h4 style="color: white; margin-bottom: 15px; font-family: 'Clash Display', sans-serif;">
+                    <i class="fas fa-plus-circle"></i> Add to Meal Log
+                </h4>
+                <form id="quick-add-form" method="post" action="{% url 'quick_add_meal' %}" style="display: inline-block;">
+                    {% csrf_token %}
+                    <input type="hidden" name="recipe_id" value="{{ recipe.id }}">
+                    
+                    <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 15px;">
+                        <select name="meal_type" required style="padding: 8px 12px; border: none; border-radius: 8px; font-size: 0.9rem;">
+                            <option value="breakfast">🍳 Breakfast</option>
+                            <option value="lunch" selected>🥗 Lunch</option>
+                            <option value="dinner">🍽️ Dinner</option>
+                            <option value="snack">🍎 Snack</option>
+                        </select>
+                        
+                        <input type="number" name="servings" value="1.0" step="0.1" min="0.1" max="10" 
+                               style="padding: 8px 12px; border: none; border-radius: 8px; width: 80px; text-align: center; font-size: 0.9rem;">
+                        
+                        <span style="color: white; font-size: 0.9rem;">serving(s)</span>
+                    </div>
+                    
+                    <button type="submit" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid white; padding: 10px 20px; border-radius: 25px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem;">
+                        <i class="fas fa-save"></i> Log This Meal
+                    </button>
+                </form>
+                
+                <div style="margin-top: 10px;">
+                    <a href="{% url 'dashboard' %}" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.8rem;">
+                        <i class="fas fa-chart-line"></i> View Dashboard
+                    </a>
+                    <span style="color: rgba(255,255,255,0.5); margin: 0 8px;">•</span>
+                    <a href="{% url 'add_meal_log' %}" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.8rem;">
+                        <i class="fas fa-edit"></i> Advanced Log
+                    </a>
+                </div>
+            </div>
+            
+            <script>
+            document.getElementById('quick-add-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const button = this.querySelector('button[type="submit"]');
+                const originalText = button.innerHTML;
+                
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                button.disabled = true;
+                
+                fetch('{% url 'quick_add_meal' %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        button.innerHTML = '<i class="fas fa-check"></i> Added!';
+                        button.style.background = 'rgba(40, 167, 69, 0.8)';
+                        
+                        // Show success message
+                        const message = document.createElement('div');
+                        message.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px 20px; border-radius: 5px; z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.2);';
+                        message.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                        document.body.appendChild(message);
+                        
+                        setTimeout(() => {
+                            message.remove();
+                            button.innerHTML = originalText;
+                            button.style.background = 'rgba(255,255,255,0.2)';
+                            button.disabled = false;
+                        }, 3000);
+                    } else {
+                        button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+                        button.style.background = 'rgba(220, 53, 69, 0.8)';
+                        
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                            button.style.background = 'rgba(255,255,255,0.2)';
+                            button.disabled = false;
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+            });
+            </script>
+            {% else %}
+            <div style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 15px; text-align: center; border: 2px dashed #dee2e6;">
+                <h4 style="color: #666; margin-bottom: 10px;">
+                    <i class="fas fa-user"></i> Track This Recipe
+                </h4>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9rem;">
+                    Log in to add this recipe to your meal diary and track your nutrition goals.
+                </p>
+                <a href="{% url 'login' %}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: 500;">
+                    <i class="fas fa-sign-in-alt"></i> Login to Track
+                </a>
+            </div>
+            {% endif %}
+            
+            <!-- PIE CHART -->
+            <div id="chart_div" style="width: 100%; height: 400px;"></div>
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type="text/javascript">
+                google.charts.load('current', { 'packages': ['corechart'] });
+                google.charts.setOnLoadCallback(drawChart);
+
+                function drawChart() {
+                    var data = google.visualization.arrayToDataTable([
+                        ['Nutrient', 'Amount'],
+                        ['Fats', 12],
+                        ['Omega-3', 2],
+                        ['Fiber', 1],
+                        ['Cholesterol', 60],
+                        ['Protein', 22]
+                    ]);
+
+                    var options = {
+                        title: 'Nutrition Information in Mediterranean Grilled Salmon',
+                        titleTextStyle: {
+                            color: '#666',
+                            fontSize: 16,
+                            bold: false,
+                            // alignment: 'center'
+                        },
+                        pieHole: 0.7,
+                        pieSliceText: 'none',
+                        legend: {
+                            position: 'right',
+                            alignment: 'center',
+                            textStyle: {
+                                color: '#666',
+                                fontSize: 14,
+                                cursor: 'pointer'
+                            }
+                        },
+                        colors: ['#708B06', '#D1D976', '#D5DCB3', '#D5DCB3', '#313040'],
+                        tooltip: {
+                            text: 'value',
+                            showColorCode: true
+                        },
+                        chartArea: {
+                            width: '80%',
+                            height: '80%'
+                        },
+                        height: 400,
+                        backgroundColor: 'transparent'
+                    };
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+                    chart.draw(data, options);
+                }
+            </script>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}

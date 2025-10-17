@@ -1,0 +1,250 @@
+{% extends 'FitBuddy_app/base.html' %}
+{% load static %}
+{% load diet_extras %}
+
+{% block header %}
+Recipe Collection
+{% endblock header %}
+
+{% block css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+    .diet-filter-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+        margin-bottom: 1rem;
+    }
+    .diet-filter-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .diet-filter-card.active {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    .recipe-card {
+        transition: transform 0.3s ease;
+        height: 100%;
+    }
+    .recipe-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .diet-badges .badge {
+        margin: 2px;
+        font-size: 0.7em;
+    }
+    .search-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-top: -20px;
+    }
+    .stats-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+<!-- Search and Stats Section -->
+<section class="search-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="ri-restaurant-2-line me-3"></i>Recipe Collection
+                </h1>
+                <p class="lead mb-4">Discover delicious recipes organized by diet preferences</p>
+                
+                <!-- Search Form -->
+                <form method="GET" class="d-flex gap-2 mb-4">
+                    <input type="text" name="search" class="form-control form-control-lg" 
+                           placeholder="Search recipes, ingredients..." 
+                           value="{{ search_query }}">
+                    <input type="hidden" name="diet" value="{{ selected_diet }}">
+                    <button type="submit" class="btn btn-warning btn-lg px-4">
+                        <i class="ri-search-line"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h3 class="text-success">{{ total_recipes }}</h3>
+                    <p class="mb-0 text-muted">Total Recipes</p>
+                    {% if selected_diet != 'All' %}
+                        <hr>
+                        <h5 class="text-primary">{{ recipes|length }}</h5>
+                        <p class="mb-0 text-muted">{{ selected_diet }} Recipes</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Diet Type Filters -->
+<section class="py-4 bg-light">
+    <div class="container">
+        <h4 class="mb-3">
+            <i class="ri-filter-line me-2"></i>Filter by Diet Type
+        </h4>
+        <div class="row g-2">
+            <!-- All Recipes -->
+            <div class="col-md-2 col-sm-4 col-6">
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}diet=All" class="text-decoration-none">
+                    <div class="card diet-filter-card {% if selected_diet == 'All' %}active{% endif %}">
+                        <div class="card-body text-center py-3">
+                            <i class="ri-restaurant-line fs-4 mb-2 d-block"></i>
+                            <strong>All Recipes</strong>
+                            <div class="small mt-1">{{ total_recipes }} recipes</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Diet Type Filters -->
+            {% for diet_type in diet_types %}
+                <div class="col-md-2 col-sm-4 col-6">
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}diet={{ diet_type }}" class="text-decoration-none">
+                        <div class="card diet-filter-card {% if selected_diet == diet_type %}active{% endif %}">
+                            <div class="card-body text-center py-3">
+                                {% if diet_type == 'Ketogenic' %}
+                                    <i class="ri-fire-line fs-4 mb-2 d-block"></i>
+                                {% elif diet_type == 'Vegan' %}
+                                    <i class="ri-leaf-line fs-4 mb-2 d-block"></i>
+                                {% elif diet_type == 'Mediterranean' %}
+                                    <i class="ri-sun-line fs-4 mb-2 d-block"></i>
+                                {% elif diet_type == 'High Protein' %}
+                                    <i class="ri-medal-line fs-4 mb-2 d-block"></i>
+                                {% elif diet_type == 'Gluten Free' %}
+                                    <i class="ri-shield-check-line fs-4 mb-2 d-block"></i>
+                                {% else %}
+                                    <i class="ri-heart-pulse-line fs-4 mb-2 d-block"></i>
+                                {% endif %}
+                                <strong>{{ diet_type }}</strong>
+                                <div class="small mt-1">{{ diet_counts|get_item:diet_type|default:0 }} recipes</div>
+                            </div>
+                        </div>
+                    </a>  
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Recipe Results -->
+<section class="py-5">
+    <div class="container">
+        {% if search_query %}
+            <div class="alert alert-info">
+                <i class="ri-search-line me-2"></i>
+                Search results for "<strong>{{ search_query }}</strong>"
+                {% if selected_diet != 'All' %} 
+                    in <strong>{{ selected_diet }}</strong> recipes
+                {% endif %}
+                - Found {{ recipes|length }} recipe{{ recipes|length|pluralize }}
+            </div>
+        {% else %}
+            <h2 class="mb-4">
+                {% if selected_diet != 'All' %}
+                    {{ selected_diet }} Recipes
+                {% else %}
+                    All Recipes
+                {% endif %}
+                <span class="badge bg-secondary ms-2">{{ recipes|length }}</span>
+            </h2>
+        {% endif %}
+
+        {% if recipes %}
+            <div class="row g-4">
+                {% for recipe in recipes %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card recipe-card h-100 shadow-sm">
+                            {% if recipe.image %}
+                                <img src="{{ recipe.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ recipe.recipe_name }}">
+                            {% else %}
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                                    <i class="ri-restaurant-line display-4 text-muted"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">{{ recipe.recipe_name }}</h5>
+                                
+                                <!-- Nutritional Info -->
+                                <div class="row text-center mb-3">
+                                    <div class="col-3">
+                                        <small class="text-muted">Calories</small>
+                                        <div class="fw-bold">{{ recipe.calories|floatformat:0|default:"N/A" }}</div>
+                                    </div>
+                                    <div class="col-3">
+                                        <small class="text-muted">Protein</small>
+                                        <div class="fw-bold">{{ recipe.protein|floatformat:1|default:"N/A" }}g</div>
+                                    </div>
+                                    <div class="col-3">
+                                        <small class="text-muted">Carbs</small>
+                                        <div class="fw-bold">{{ recipe.carbohydrate|floatformat:1|default:"N/A" }}g</div>
+                                    </div>
+                                    <div class="col-3">
+                                        <small class="text-muted">Fat</small>
+                                        <div class="fw-bold">{{ recipe.fat|floatformat:1|default:"N/A" }}g</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Diet Types -->
+                                <div class="diet-badges mb-3">
+                                    {% for diet in recipe.get_diet_types_list %}
+                                        {% if diet == 'Ketogenic' %}
+                                            <span class="badge bg-danger">{{ diet }}</span>
+                                        {% elif diet == 'Vegan' %}
+                                            <span class="badge bg-success">{{ diet }}</span>
+                                        {% elif diet == 'Mediterranean' %}
+                                            <span class="badge bg-info">{{ diet }}</span>
+                                        {% elif diet == 'High Protein' %}
+                                            <span class="badge bg-warning text-dark">{{ diet }}</span>
+                                        {% elif diet == 'Gluten Free' %}
+                                            <span class="badge bg-secondary">{{ diet }}</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">{{ diet }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-auto">
+                                    <a href="{% url 'recipe_detail' recipe.pk %}" class="btn btn-success w-100">
+                                        <i class="ri-eye-line me-2"></i>View Recipe
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <div class="display-1 text-muted mb-3">
+                    <i class="ri-search-line"></i>
+                </div>
+                <h3 class="text-muted">No recipes found</h3>
+                <p class="text-muted">
+                    {% if search_query %}
+                        Try adjusting your search terms or browse different diet categories.
+                    {% else %}
+                        No recipes available for the selected diet type.
+                    {% endif %}
+                </p>
+                <a href="{% url 'features' %}" class="btn btn-success">
+                    <i class="ri-refresh-line me-2"></i>View All Recipes
+                </a>
+            </div>
+        {% endif %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock content %}

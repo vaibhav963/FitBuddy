@@ -1,0 +1,674 @@
+{% extends 'FitBuddy_app/base.html' %}
+
+{% block title %}Your AI Meal Plan - FitBuddy{% endblock %}
+
+{% block content %}
+<style>
+    .meal-plan-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .plan-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 40px 20px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .plan-header h1 {
+        font-size: var(--extra-large-font-size);
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+    
+    .plan-header p {
+        font-size: var(--medium-font-size);
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .plan-summary {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .summary-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        border-left: 4px solid #28a745;
+    }
+    
+    .summary-card .value {
+        font-size: var(--large-font-size);
+        font-weight: 700;
+        color: #28a745;
+        margin-bottom: 5px;
+    }
+    
+    .summary-card .label {
+        font-size: var(--base-font-size);
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .day-container {
+        background: white;
+        margin-bottom: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .day-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 30px;
+        font-size: var(--large-font-size);
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .day-totals {
+        font-size: var(--base-font-size);
+        opacity: 0.9;
+    }
+    
+    .meals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        padding: 30px;
+    }
+    
+    .meal-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 25px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .meal-card:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    }
+    
+    .meal-type {
+        background: #667eea;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: var(--small-font-size);
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+    
+    .breakfast { background: #ff6b6b; }
+    .lunch { background: #4ecdc4; }
+    .dinner { background: #45b7d1; }
+    .snack { background: #f9ca24; color: #333; }
+    
+    .recipe-name {
+        font-size: var(--medium-font-size);
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .recipe-name:hover {
+        color: #667eea;
+        text-decoration: underline;
+    }
+    
+    .meal-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+        font-size: var(--base-font-size);
+    }
+    
+    .meal-detail {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .meal-detail .label {
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .meal-detail .value {
+        color: #333;
+        font-weight: 600;
+    }
+    
+    .tips-section {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-top: 30px;
+    }
+    
+    .tips-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .tips-list li {
+        background: #e3f2fd;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border-left: 4px solid #2196f3;
+        font-size: var(--base-font-size);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 30px 0;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: 12px 25px;
+        border-radius: 25px;
+        border: none;
+        font-size: var(--base-font-size);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .recipe-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        overflow-y: auto;
+    }
+    
+    .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 0;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 15px 15px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h3 {
+        margin: 0;
+        font-size: var(--large-font-size);
+    }
+    
+    .close {
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        line-height: 1;
+    }
+    
+    .close:hover {
+        opacity: 0.7;
+    }
+    
+    .modal-body {
+        padding: 30px;
+    }
+    
+    .nutrition-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .nutrition-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    
+    .nutrition-value {
+        font-size: var(--medium-font-size);
+        font-weight: 700;
+        color: #28a745;
+        margin-bottom: 5px;
+    }
+    
+    .nutrition-label {
+        font-size: var(--small-font-size);
+        color: #666;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+        .meal-plan-container {
+            padding: 10px;
+        }
+        
+        .plan-header {
+            padding: 30px 15px;
+        }
+        
+        .meals-grid {
+            grid-template-columns: 1fr;
+            padding: 20px;
+        }
+        
+        .day-header {
+            padding: 15px 20px;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn-action {
+            width: 100%;
+            max-width: 250px;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            width: 95%;
+            margin: 10% auto;
+        }
+    }
+</style>
+
+<div class="meal-plan-container">
+    <!-- Plan Header -->
+    <div class="plan-header">
+        <h1><i class="fas fa-check-circle"></i> Your Personalized Meal Plan</h1>
+        <p>AI-generated meal plan tailored to your specific goals and preferences</p>
+    </div>
+    
+    <!-- Plan Summary -->
+    {% if meal_plan.plan_summary %}
+    <div class="plan-summary">
+        <h2><i class="fas fa-chart-line"></i> Plan Overview</h2>
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="value">{{ meal_plan.plan_summary.total_days }}</div>
+                <div class="label">Days</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">{{ meal_plan.plan_summary.avg_daily_calories }}</div>
+                <div class="label">Avg Daily Calories</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">{{ meal_plan.plan_summary.diet_compliance }}</div>
+                <div class="label">Diet Compliance</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">{{ meal_plan.plan_summary.variety_score }}</div>
+                <div class="label">Variety Score</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{% url 'ai_meal_planner' %}" class="btn-action btn-secondary">
+            <i class="fas fa-arrow-left"></i> Generate New Plan
+        </a>
+        <button onclick="printMealPlan()" class="btn-action btn-primary">
+            <i class="fas fa-print"></i> Print Plan
+        </button>
+        <button onclick="shareMealPlan()" class="btn-action btn-success">
+            <i class="fas fa-share"></i> Share Plan
+        </button>
+    </div>
+    
+    <!-- Daily Meal Plans -->
+    {% for day_key, day_data in meal_plan.meal_plan.items %}
+    <div class="day-container">
+        <div class="day-header">
+            <div>
+                <i class="fas fa-calendar-day"></i>
+                {{ day_key|title|slice:"4:" }} - {{ day_data.date }}
+            </div>
+            {% if day_data.daily_totals %}
+            <div class="day-totals">
+                {{ day_data.daily_totals.calories }} cal | 
+                {{ day_data.daily_totals.protein }} protein | 
+                {{ day_data.daily_totals.carbs }} carbs | 
+                {{ day_data.daily_totals.fat }} fat
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="meals-grid">
+            {% for meal_type, meal_data in day_data.meals.items %}
+            <div class="meal-card">
+                <div class="meal-type {{ meal_type }}">
+                    <i class="fas fa-utensils"></i> {{ meal_type|title }}
+                </div>
+                
+                <div class="recipe-name" onclick="showRecipeDetails('{{ meal_data.recipe_name }}')">
+                    {{ meal_data.recipe_name }}
+                </div>
+                
+                <div class="meal-details">
+                    <div class="meal-detail">
+                        <span class="label">Portion:</span>
+                        <span class="value">{{ meal_data.portion_size }}</span>
+                    </div>
+                    <div class="meal-detail">
+                        <span class="label">Calories:</span>
+                        <span class="value">{{ meal_data.calories }}</span>
+                    </div>
+                    <div class="meal-detail">
+                        <span class="label">Time:</span>
+                        <span class="value">{{ meal_data.time }}</span>
+                    </div>
+                    <div class="meal-detail">
+                        <span class="label">Details:</span>
+                        <span class="value">
+                            <i class="fas fa-info-circle" style="color: #667eea; cursor: pointer;" 
+                               onclick="showRecipeDetails('{{ meal_data.recipe_name }}')"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Action Buttons Bottom -->
+    <div class="action-buttons">
+        <a href="{% url 'home' %}" class="btn-action btn-secondary">
+            <i class="fas fa-home"></i> Back to Home
+        </a>
+        <a href="{% url 'features' %}" class="btn-action btn-primary">
+            <i class="fas fa-utensils"></i> Browse All Recipes
+        </a>
+        <a href="{% url 'ai_meal_planner' %}" class="btn-action btn-success">
+            <i class="fas fa-magic"></i> Create Another Plan
+        </a>
+    </div>
+</div>
+
+<!-- Recipe Details Modal -->
+<div id="recipeModal" class="recipe-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalRecipeName">Recipe Details</h3>
+            <button class="close" onclick="closeRecipeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div style="text-align: center; padding: 40px;">
+                <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                <p>Loading recipe details...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showRecipeDetails(recipeName) {
+    const modal = document.getElementById('recipeModal');
+    const modalTitle = document.getElementById('modalRecipeName');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalTitle.textContent = recipeName;
+    modal.style.display = 'block';
+    
+    // Show loading
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <p>Loading recipe details...</p>
+        </div>
+    `;
+    
+    // Fetch recipe details
+    fetch(`/meal-recipe-detail/${encodeURIComponent(recipeName)}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const recipe = data.recipe;
+                let ingredientsList = '';
+                let instructionsList = '';
+                
+                // Handle ingredients
+                if (recipe.ingredients) {
+                    try {
+                        // Parse ingredients list
+                        const ingredients = JSON.parse(recipe.ingredients.replace(/'/g, '"'));
+                        ingredientsList = ingredients.map(ing => `<li>${ing}</li>`).join('');
+                    } catch {
+                        ingredientsList = `<li>${recipe.ingredients}</li>`;
+                    }
+                }
+                
+                // Handle instructions
+                if (recipe.instructions) {
+                    try {
+                        const instructions = JSON.parse(recipe.instructions.replace(/'/g, '"'));
+                        instructionsList = instructions.map((inst, index) => 
+                            `<li><strong>Step ${index + 1}:</strong> ${inst}</li>`
+                        ).join('');
+                    } catch {
+                        instructionsList = `<li>${recipe.instructions}</li>`;
+                    }
+                }
+                
+                modalBody.innerHTML = `
+                    <div>
+                        <div style="margin-bottom: 25px;">
+                            <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-info-circle"></i> Recipe Information</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                                <div><strong>Type:</strong> ${recipe.type || 'N/A'}</div>
+                                <div><strong>Cuisine:</strong> ${recipe.cuisine || 'N/A'}</div>
+                                <div><strong>Prep Time:</strong> ${recipe.prep_time || 'N/A'}</div>
+                                <div><strong>Cook Time:</strong> ${recipe.cook_time || 'N/A'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="nutrition-grid">
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${recipe.calories || 0}</div>
+                                <div class="nutrition-label">Calories</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${recipe.protein || 0}g</div>
+                                <div class="nutrition-label">Protein</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${recipe.carbohydrate || 0}g</div>
+                                <div class="nutrition-label">Carbs</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${recipe.fat || 0}g</div>
+                                <div class="nutrition-label">Fat</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${recipe.fiber || 0}g</div>
+                                <div class="nutrition-label">Fiber</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${recipe.sodium || 0}mg</div>
+                                <div class="nutrition-label">Sodium</div>
+                            </div>
+                        </div>
+                        
+                        ${ingredientsList ? `
+                            <div style="margin: 25px 0;">
+                                <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-list"></i> Ingredients</h4>
+                                <ul style="list-style-type: disc; padding-left: 20px; line-height: 1.8;">
+                                    ${ingredientsList}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        ${instructionsList ? `
+                            <div style="margin: 25px 0;">
+                                <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-tasks"></i> Instructions</h4>
+                                <ol style="padding-left: 20px; line-height: 1.8;">
+                                    ${instructionsList}
+                                </ol>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: #dc3545; margin-bottom: 15px;"></i>
+                        <p>Recipe details not found in our database.</p>
+                        <p style="color: #666; font-size: 0.9em;">This recipe was suggested by AI but detailed information is not available.</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            modalBody.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ffc107; margin-bottom: 15px;"></i>
+                    <p>Error loading recipe details.</p>
+                    <p style="color: #666; font-size: 0.9em;">Please try again later.</p>
+                </div>
+            `;
+        });
+}
+
+function closeRecipeModal() {
+    document.getElementById('recipeModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('recipeModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function printMealPlan() {
+    window.print();
+}
+
+function shareMealPlan() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'My AI-Generated Meal Plan',
+            text: 'Check out my personalized meal plan created by FitBuddy AI!',
+            url: window.location.href
+        });
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Meal plan URL copied to clipboard!');
+        }).catch(() => {
+            alert('Share URL: ' + url);
+        });
+    }
+}
+
+// Add print styles
+const printStyles = `
+    @media print {
+        .action-buttons, .modal { display: none !important; }
+        .day-container { page-break-inside: avoid; margin-bottom: 20px; }
+        .meal-card { break-inside: avoid; }
+        body { font-size: 12px; }
+        .plan-header { background: #28a745 !important; -webkit-print-color-adjust: exact; }
+    }
+`;
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = printStyles;
+document.head.appendChild(styleSheet);
+</script>
+{% endblock %}

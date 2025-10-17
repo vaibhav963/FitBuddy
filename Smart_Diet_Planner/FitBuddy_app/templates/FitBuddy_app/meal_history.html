@@ -1,0 +1,537 @@
+{% extends 'FitBuddy_app/base.html' %}
+{% load static %}
+{% load meal_extras %}
+
+{% block header %}
+Meal History
+{% endblock header %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'FitBuddy_app/base.css' %}">
+<style>
+    .history-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: var(--light-bg);
+        min-height: 100vh;
+    }
+    
+    .history-header {
+        text-align: center;
+        margin-bottom: 50px;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+        border-radius: 20px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .history-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .history-header h1 {
+        font-family: 'Clash Display', sans-serif;
+        font-size: 3rem;
+        margin-bottom: 15px;
+        font-weight: 600;
+        position: relative;
+        z-index: 2;
+        line-height: 1.2;
+    }
+    
+    .history-header p {
+        font-size: 1.2rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+        font-weight: 400;
+        line-height: 1.4;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .filter-section {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--primary-bg);
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .filter-info {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-info h3 {
+        margin: 0 0 5px 0;
+        color: #333;
+        font-size: 1.2rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .filter-info p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .filter-options {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #667eea;
+        background: transparent;
+        color: #667eea;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active,
+    .filter-btn:hover {
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--primary-bg);
+        text-align: center;
+        transition: transform 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .history-content {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--primary-bg);
+        overflow: hidden;
+    }
+    
+    .day-section {
+        border-bottom: 1px solid #eee;
+    }
+    
+    .day-section:last-child {
+        border-bottom: none;
+    }
+    
+    .day-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .day-date {
+        font-weight: bold;
+        color: #333;
+        font-size: 1.1rem;
+    }
+    
+    .day-totals {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .total-item {
+        text-align: center;
+    }
+    
+    .total-value {
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .total-label {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .meals-list {
+        padding: 0;
+    }
+    
+    .meal-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .meal-item:last-child {
+        border-bottom: none;
+    }
+    
+    .meal-info {
+        flex: 1;
+    }
+    
+    .meal-type {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+    
+    .meal-type.breakfast {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .meal-type.lunch {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .meal-type.dinner {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .meal-type.snack {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .meal-name {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 3px;
+    }
+    
+    .meal-details {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .meal-nutrition {
+        text-align: right;
+        font-size: 0.9rem;
+    }
+    
+    .calories {
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 3px;
+    }
+    
+    .macros {
+        color: #666;
+        font-size: 0.8rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+    
+    .btn {
+        background: var(--secondary-color);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-block;
+        font-weight: 500;
+        transition: all var(--transition);
+        font-size: 16px;
+    }
+    
+    .btn:hover {
+        background: var(--secondary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(138, 190, 83, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+            transform: translateY(-20px) rotate(180deg);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .history-container {
+            padding: 10px;
+        }
+        
+        .history-header {
+            padding: 0 10px;
+        }
+        
+        .history-header h1 {
+            font-size: 2rem;
+        }
+        
+        .filter-section {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+            padding: 20px;
+        }
+        
+        .filter-info {
+            text-align: center;
+            min-width: auto;
+        }
+        
+        .filter-options {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .day-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+        }
+        
+        .day-totals {
+            justify-content: space-around;
+        }
+        
+        .meal-item {
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
+        }
+        
+        .meal-nutrition {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="history-container">
+    <!-- Header -->
+    <div class="history-header">
+        <h1>📊 Meal History</h1>
+        <p>Track your nutrition journey over time</p>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="filter-info">
+            <h3>
+                <i class="fas fa-calendar-alt"></i>
+                {{ start_date|date:"M d" }} - {{ end_date|date:"M d, Y" }}
+            </h3>
+            <p>{{ total_entries }} meal entr{{ total_entries|pluralize:"y,ies" }} found</p>
+        </div>
+        
+        <div class="filter-options">
+            <a href="?days=7" class="filter-btn {% if days == 7 %}active{% endif %}">Last 7 Days</a>
+            <a href="?days=30" class="filter-btn {% if days == 30 %}active{% endif %}">Last 30 Days</a>
+            <a href="?days=90" class="filter-btn {% if days == 90 %}active{% endif %}">Last 90 Days</a>
+        </div>
+    </div>
+    
+    <!-- Summary Stats -->
+    {% if total_entries > 0 %}
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_entries }}</div>
+                <div class="stat-label">Total Meals</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ sorted_dates|length }}</div>
+                <div class="stat-label">Days Tracked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">
+                    {% widthratio total_entries sorted_dates|length 1 %}
+                </div>
+                <div class="stat-label">Avg Meals/Day</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">
+                    {% for date, totals in daily_totals.items %}
+                        {% if forloop.first %}{{ totals.calories|floatformat:0 }}{% endif %}
+                    {% endfor %}
+                </div>
+                <div class="stat-label">Avg Daily Calories</div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- History Content -->
+    <div class="history-content">
+        {% if sorted_dates %}
+            {% for date in sorted_dates %}
+                <div class="day-section">
+                    <div class="day-header">
+                        <div class="day-date">
+                            <i class="fas fa-calendar-day"></i>
+                            {{ date|date:"l, F d, Y" }}
+                            {% if date == today %}
+                                <span style="color: #667eea; font-size: 0.9rem;">(Today)</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="day-totals">
+                            {% with day_total=daily_totals|get_item:date %}
+                            <div class="total-item">
+                                <div class="total-value">{{ day_total.calories|floatformat:0 }}</div>
+                                <div class="total-label">Calories</div>
+                            </div>
+                            <div class="total-item">
+                                <div class="total-value">{{ day_total.protein|floatformat:0 }}g</div>
+                                <div class="total-label">Protein</div>
+                            </div>
+                            <div class="total-item">
+                                <div class="total-value">{{ day_total.carbs|floatformat:0 }}g</div>
+                                <div class="total-label">Carbs</div>
+                            </div>
+                            <div class="total-item">
+                                <div class="total-value">{{ day_total.fat|floatformat:0 }}g</div>
+                                <div class="total-label">Fat</div>
+                            </div>
+                            {% endwith %}
+                        </div>
+                    </div>
+                    
+                    <div class="meals-list">
+                        {% for meal in meals_by_date|get_item:date %}
+                            <div class="meal-item">
+                                <div class="meal-info">
+                                    <span class="meal-type {{ meal.meal_type }}">
+                                        {% if meal.meal_type == 'breakfast' %}🍳{% elif meal.meal_type == 'lunch' %}🥗{% elif meal.meal_type == 'dinner' %}🍽️{% else %}🍎{% endif %}
+                                        {{ meal.meal_type|title }}
+                                    </span>
+                                    <div class="meal-name">{{ meal.recipe.recipe_name }}</div>
+                                    <div class="meal-details">
+                                        {{ meal.servings }} serving{{ meal.servings|pluralize }}
+                                        {% if meal.notes %}• {{ meal.notes|truncatechars:40 }}{% endif %}
+                                    </div>
+                                </div>
+                                <div class="meal-nutrition">
+                                    <div class="calories">{{ meal.get_total_calories|floatformat:0 }} cal</div>
+                                    <div class="macros">
+                                        P: {{ meal.get_total_protein|floatformat:0 }}g • 
+                                        C: {{ meal.get_total_carbs|floatformat:0 }}g • 
+                                        F: {{ meal.get_total_fat|floatformat:0 }}g
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-utensils"></i>
+                <h3>No Meals Found</h3>
+                <p>You haven't logged any meals in the selected time period.</p>
+                <a href="{% url 'add_meal_log' %}" class="btn">
+                    <i class="fas fa-plus"></i> Log Your First Meal
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Back to Dashboard -->
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'dashboard' %}" class="btn">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Custom template filter for dictionary access -->
+{% load static %}
+<script>
+// Add any JavaScript functionality here if needed
+document.addEventListener('DOMContentLoaded', function() {
+    // You can add interactive features here
+    console.log('Meal history loaded');
+});
+</script>
+{% endblock content %}

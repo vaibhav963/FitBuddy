@@ -1,0 +1,255 @@
+{% extends 'FitBuddy_app/base.html' %}
+{% load static %}
+
+{% block header %}
+Delete Meal Log
+{% endblock header %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'FitBuddy_app/base.css' %}">
+<style>
+    .delete-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: var(--light-bg);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .delete-card {
+        background: white;
+        padding: 50px;
+        border-radius: 20px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--primary-bg);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    .delete-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .delete-icon {
+        font-size: 3rem;
+        color: #ff6b6b;
+        margin-bottom: 20px;
+    }
+    
+    .delete-title {
+        font-family: 'Clash Display', sans-serif;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .meal-info {
+        background: var(--light-bg);
+        padding: 30px;
+        border-radius: 20px;
+        margin: 30px 0;
+        border: 1px solid var(--primary-bg);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .meal-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+    }
+    
+    .meal-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .meal-details {
+        color: #666;
+        margin-bottom: 10px;
+    }
+    
+    .nutrition-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .nutrition-item {
+        text-align: center;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+    }
+    
+    .nutrition-value {
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .nutrition-label {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .warning-text {
+        color: #666;
+        margin: 20px 0;
+        font-size: 1rem;
+    }
+    
+    .btn {
+        padding: 15px 35px;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        margin: 0 10px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        text-decoration: none;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        box-shadow: 0 12px 30px rgba(255, 107, 107, 0.4);
+        color: white;
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: var(--secondary-color);
+        border: 2px solid var(--secondary-color);
+    }
+    
+    .btn-outline:hover {
+        background: var(--secondary-color);
+        color: white;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .form-actions {
+        margin-top: 30px;
+    }
+    
+    @media (max-width: 768px) {
+        .delete-container {
+            padding: 10px;
+        }
+        
+        .delete-card {
+            padding: 25px;
+        }
+        
+        .nutrition-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .btn {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-card">
+        <div class="delete-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <h1 class="delete-title">Delete Meal Log?</h1>
+        
+        <div class="meal-info">
+            <div class="meal-name">{{ meal_log.recipe.recipe_name }}</div>
+            <div class="meal-details">
+                <strong>{{ meal_log.meal_type|title }}</strong> on {{ meal_log.date_logged|date:"F d, Y" }}
+            </div>
+            <div class="meal-details">
+                {{ meal_log.servings }} serving{{ meal_log.servings|pluralize }}
+                {% if meal_log.notes %} • {{ meal_log.notes }}{% endif %}
+            </div>
+            
+            <div class="nutrition-summary">
+                <div class="nutrition-item">
+                    <div class="nutrition-value">{{ meal_log.get_total_calories|floatformat:0 }}</div>
+                    <div class="nutrition-label">Calories</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">{{ meal_log.get_total_protein|floatformat:0 }}g</div>
+                    <div class="nutrition-label">Protein</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">{{ meal_log.get_total_carbs|floatformat:0 }}g</div>
+                    <div class="nutrition-label">Carbs</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">{{ meal_log.get_total_fat|floatformat:0 }}g</div>
+                    <div class="nutrition-label">Fat</div>
+                </div>
+            </div>
+        </div>
+        
+        <p class="warning-text">
+            <i class="fas fa-info-circle"></i>
+            This action cannot be undone. This meal log entry will be permanently removed from your history.
+        </p>
+        
+        <div class="form-actions">
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Yes, Delete It
+                </button>
+            </form>
+            
+            <a href="{% url 'dashboard' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock content %}
