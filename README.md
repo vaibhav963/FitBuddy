@@ -119,19 +119,9 @@ python manage.py test
 - Load or generate sample data: see helper scripts in `Smart_Diet_Planner/` such as `create_test_recipe.py` and `add_recipe_images.py`.
 
 
-## Troubleshooting
-
-- Git not found in PowerShell: install from https://git-scm.com/download/win or via `winget install --id Git.Git -e`.
-- FAISS errors: ensure `GOOGLE_API_KEY` is set in `.env` and you have internet connectivity; then run `python regenerate_faiss.py` again.
-- Database issues: delete `db.sqlite3` (if you’re okay losing local data) and re-run `python manage.py migrate`.
-- Static files missing in production: run `python manage.py collectstatic` and configure your web server to serve `STATIC_ROOT`.
-
-
 ## Contributing
 
 Issues and pull requests are welcome. Please open an issue to discuss substantial changes first.
 
 
-## License
 
-Add a license file (e.g., MIT/Apache-2.0) if you intend to open-source this project.
